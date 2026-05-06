@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Command Center</title>
+    <style>
+        :root {
+            --bezel-bg: #2a2a2a;
+            --panel-bg: #333333;
+            --lcd-bg: #1d1f10;
+            --lcd-text: #c8ff00;
+            --led-red: #ff3333;
+            --led-green: #00ff41;
+            --led-off: #441111;
+            --accent-gold: #d4af37;
+        }
+
+        body {
+            background-color: #121212;
+            font-family: 'Segoe UI', 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* The Main Machined Panel */
+        .hmi-chassis {
+            background: linear-gradient(145deg, #3e3e3e, #282828);
+            border: 4px solid #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            width: 480px;
+            box-shadow: 
+                inset 1px 1px 2px rgba(255,255,255,0.1),
+                10px 20px 40px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* Section Etching */
+        .module {
+            border: 1px solid #1a1a1a;
+            border-top: 1px solid #4d4d4d;
+            background: #2e2e2e;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            border-radius: 4px;
+        }
+
+        h2 {
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::after { content: ""; flex: 1; height: 1px; background: #444; }
+
+        /* Industrial Slide Switch */
+        .power-rail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .switch-label { font-weight: bold; color: #aaa; font-size: 0.9rem; }
+
+        .slide-switch {
+            position: relative;
+            width: 70px;
+            height: 34px;
+        }
+
+        .slide-switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #1a1a1a;
+            border-radius: 4px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.7);
+            border: 1px solid #444;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px; width: 30px;
+            left: 3px; bottom: 3px;
+            background: linear-gradient(to bottom, #777, #444);
+            border-radius: 2px;
+            transition: .2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        input:checked + .slider:before { transform: translateX(34px); background: linear-gradient(to bottom, #999, #666); }
+        input:checked + .slider { border-color: var(--led-green); }
+
+        /* Tactile Radio Buttons */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-group label {
+            background: linear-gradient(180deg, #444, #333);
+            border: 1px solid #111;
+            padding: 12px;
+            text-align: center;
+            color: #bbb;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            box-shadow: 0 3px 0 #111;
+            transition: all 0.1s;
+        }
+
+        .btn-group input { display: none; }
+
+        .btn-group label:active { transform: translateY(2px); box-shadow: 0 1px 0 #111; }
+
+        .btn-group label:has(input:checked) {
+            background: #222;
+            color: var(--led-green);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+            border-color: #000;
+        }
+
+        /* LCD Data Entry */
+        .data-input {
+            display: flex;
+            align-items: center;
+            background: var(--lcd-bg);
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 2px solid #111;
+        }
+
+        input[type="number"] {
+            background: transparent;
+            border: none;
+            color: var(--lcd-text);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            width: 60px;
+            outline: none;
+        }
+
+        .unit { color: #556600; font-size: 0.7rem; font-weight: bold; margin-left: 5px; }
+
+        button[type="submit"] {
+            background: #444;
+            color: #eee;
+            border: 1px solid #111;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-left: 10px;
+        }
+
+        button[type="submit"]:hover { background: #555; }
+
+        .row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+
+    </style>
+</head>
+<body>
+
+<div class="hmi-chassis">
+    <div class="power-rail">
+        <span class="switch-label">MASTER BUS POWER</span>
+        <label class="slide-switch">
+            <input type="checkbox" name="power">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+
+    <div class="module">
+        <h2>Manual Override</h2>
+        <form action="/manual" method="POST">
+          <div class="btn-group">
+              <label><input type="radio" name="manual_axis" value="x" checked>X-AXIS</label>
+              <label><input type="radio" name="manual_axis" value="a">A-ROT</label>
+          </div>
+          <div class="row">
+              <span style="font-size: 0.7rem; color: #777;">SET SPEED</span>
+              <div class="data-input">
+                  <input type="number" name="manual_speed" value="10">
+                  <span class="unit">mm/u</span>
+              </div>
+              <div class="btn-group" style="margin-top:15px;">
+                  <label style="color: var(--led-green);"><input type="radio" name="auto_control" value="start" onchange="this.form.submit()">▶ EXECUTE</label>
+                  <label style="color: var(--led-red);"><input type="radio" name="auto_control" value="stop" onclick="fetch('/manual/stop')">■ ABORT</label>
+              </div>
+          </div>
+        </form>
+    </div>
+
+    <div class="module">
+        <form action="/auto" method="POST">
+          <h2>Auto Sequence</h2>
+          <div class="row">
+              <div class="data-input">
+                  <span class="unit" style="margin-right:5px">VEL</span>
+                  <input type="number" name="auto_speed" value="0">
+              </div>
+              <div class="data-input">
+                  <span class="unit" style="margin-right:5px">STRK</span>
+                  <input type="number" name="stroke" value="0">
+              </div>
+          </div>
+          <div class="btn-group" style="margin-top:15px;">
+              <label style="color: var(--led-green);"><input type="radio" name="auto_control" value="start" onchange="this.form.submit()">▶ EXECUTE</label>
+              <label style="color: var(--led-red);"><input type="radio" name="auto_control" value="stop" onclick="fetch('/trminet_auto')">■ ABORT</label>
+          </div>
+        </form>
+    </div>
+    
+</div>
+
+
+</body>
+</html>
